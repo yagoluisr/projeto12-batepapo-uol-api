@@ -20,8 +20,6 @@ mongoClient.connect().then(() => {
 app.post('/participants', async (req, res) => {
     const participant = req.body;
 
-    //console.log(participant.name);
-    //console.log({...participant, lastStatus: `${Date.now()}`});
 
     if (!participant || typeof(participant.name) !== 'string' || participant.name === '') {
         res.sendStatus(422);
