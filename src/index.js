@@ -13,10 +13,29 @@ const mongoClient = new MongoClient(process.env.MONGO_URI);
 
 let db;
 mongoClient.connect().then(() => {
-    db = mongoClient.db('test');
+    db = mongoClient.db('uol');
 });
 
 
+app.post('/participants', async (req, res) => {
+    const participant = req.body;
+
+    //console.log(participant.name);
+    //console.log({...participant, lastStatus: `${Date.now()}`});
+
+    if (!participant || typeof(participant.name) !== 'string' || participant.name === '') {
+        res.sendStatus(422);
+    }
+
+    try {
+        const user = await db.collection('participants').insertOne({...participant, lastStatus: `${Date.now()}`})    
+        console.log(user);
+        res.sendStatus(201);
+    } catch (error) {
+        res.sendStatus(409);
+    }
+    
+});
 
 
 
