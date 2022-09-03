@@ -19,8 +19,14 @@ mongoClient.connect().then(() => {
 });
 
 const userSchema = joi.object({
-    name: joi.string().empty()
+    name: joi.string().empty().required()
 });
+
+const messageSchema = joi.object({
+    to: joi.string().empty(),
+    text: joi.string().empty(),
+    type: joi.string().valid("message","private_message")
+})
 
 
 // console.log(dayjs());
@@ -51,7 +57,7 @@ app.post('/participants', async (req, res) => {
         const user = await db.collection('participants').insertOne({...participant, lastStatus: `${Date.now()}`})    
         console.log(user);
 
-        const message = await db.collection('message').insertOne({
+        const message = await db.collection('messages').insertOne({
             from: participant.name, 
             to: 'Todos', 
             text: 'entra na sala...', 
@@ -70,7 +76,38 @@ app.post('/participants', async (req, res) => {
 app.get('/participants', async (req, res) => {
     const participants = await db.collection('participants').find().toArray();
     res.send(participants);
-})
+});
+
+app.post('/messages', async (req, res) => {
+    const { to, text, type } = req.body;
+    const user = req.headers.user;
+    const validation = messageSchema.validate(req.body, {abortEarly: false});
+
+    if (validation.error) {
+        const error = validation.error.details.map(obj => obj.message)
+        return res.status(422).send(error);
+    }
+
+    try {
+        const participant = await db.collection('participants').find({name: user}).toArray();
+        
+        if (participant.length === 0) {
+            return res.status(422).send('Esse remetente não está mais online');
+        }
+
+        const test = await db.collection('messages').insertOne({
+            from: user, 
+            to, 
+            text, 
+            type, 
+            time: dayjs().format('HH:mm:ss')
+    });
+        console.log(test);
+        res.sendStatus(201);
+    } catch (error) {
+        res.status(422).send(error);
+    }
+});
 
 
 
