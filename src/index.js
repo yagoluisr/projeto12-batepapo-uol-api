@@ -109,6 +109,24 @@ app.post('/messages', async (req, res) => {
     }
 });
 
+app.get('/messages', async (req, res) => {
+    const limit = parseInt(req.query.limit);
+
+    try {
+        const messages = await db.collection('messages').find().toArray();
+
+        if (!limit) return res.status(200).send(messages);
+        
+        const filteredMessages = messages.slice(-limit);
+
+        res.status(200).send(filteredMessages);
+    } catch (error) {
+        res.status(422).send(error);   
+    }
+
+    //res.send(a);
+});
+
 
 
 
