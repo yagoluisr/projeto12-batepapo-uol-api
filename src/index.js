@@ -129,7 +129,21 @@ app.get('/messages', async (req, res) => {
     }
 });
 
+app.post('/status', async (req, res) => {
+    const user = req.headers.user;
 
+    try {
+        const participant = await db.collection('participants').find({name: user}).toArray();
+        
+        if (participant.length === 0) {
+            return res.status(404).send('Status: Offline');
+        }
+
+        res.status(200).send(user);
+    } catch (error) {
+        res.status(404).send(error);
+    }
+});
 
 
 app.listen(5000, () => {
