@@ -29,10 +29,6 @@ const messageSchema = joi.object({
 })
 
 
-// console.log(dayjs());
-// console.log(dayjs().format( 'HH:mm:ss' ));
-// console.log(dayjs().format());
-
 app.post('/participants', async (req, res) => {
     const participant = req.body;
 
@@ -110,21 +106,27 @@ app.post('/messages', async (req, res) => {
 });
 
 app.get('/messages', async (req, res) => {
+    const user = req.headers.user;
     const limit = parseInt(req.query.limit);
-
+    
     try {
         const messages = await db.collection('messages').find().toArray();
 
         if (!limit) return res.status(200).send(messages);
-        
-        const filteredMessages = messages.slice(-limit);
 
-        res.status(200).send(filteredMessages);
+        const filteredMessages = messages
+            .filter(msg => 
+                msg.to === "Todos" || 
+                (msg.type === "private_message" &&
+                 (msg.from === user || msg.to === user)
+                ));
+        
+        const limitMessages = filteredMessages.slice(-limit);
+
+        res.status(200).send(limitMessages);
     } catch (error) {
         res.status(422).send(error);   
     }
-
-    //res.send(a);
 });
 
 
