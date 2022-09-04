@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 import dotenv from 'dotenv';
 import joi from 'joi';
 import dayjs from 'dayjs';
@@ -31,9 +31,6 @@ const messageSchema = joi.object({
 
 app.post('/participants', async (req, res) => {
     const participant = req.body;
-
-    //console.log(participant.name);
-    //console.log({...participant, lastStatus: `${Date.now()}`});
 
     const validationUser = userSchema.validate(participant, {abortEarly: false});
 
@@ -139,7 +136,7 @@ app.post('/status', async (req, res) => {
             return res.status(404).send('Status: Offline');
         }
 
-        let a = await db.collection('participants')
+        await db.collection('participants')
         .updateOne(
             {name: user},
             {$set:{lastStatus: `${Date.now()}`}}
@@ -151,7 +148,26 @@ app.post('/status', async (req, res) => {
     }
 });
 
-console.log(Date.now())
+setInterval(async () => {
+    let participant = await db.collection('participants').find().toArray();
+
+    let filterParticipant = participant.filter(obj => ((Date.now() - obj.lastStatus) / 1000) > 10);
+
+    filterParticipant.forEach(async (obj) => {
+        await db.collection('participants').deleteOne({_id: ObjectId(obj._id)});
+        await db.collection('messages').insertOne(
+            {
+                from: obj.name, 
+                to: 'Todos', 
+                text: 'sai da sala...', 
+                type: 'status', 
+                time: dayjs().format('HH:mm:ss')
+            }
+        )
+    });
+
+}, 15000);
+
 app.listen(5000, () => {
     console.log('listen on port 5000');
-})
+});
