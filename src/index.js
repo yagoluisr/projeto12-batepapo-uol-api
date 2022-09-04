@@ -139,13 +139,19 @@ app.post('/status', async (req, res) => {
             return res.status(404).send('Status: Offline');
         }
 
+        let a = await db.collection('participants')
+        .updateOne(
+            {name: user},
+            {$set:{lastStatus: `${Date.now()}`}}
+        )
+
         res.status(200).send(user);
     } catch (error) {
         res.status(404).send(error);
     }
 });
 
-
+console.log(Date.now())
 app.listen(5000, () => {
     console.log('listen on port 5000');
 })
