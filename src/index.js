@@ -168,6 +168,30 @@ setInterval(async () => {
 
 }, 15000);
 
+app.delete('/messages/:ID_DA_MENSAGEM', async (req, res) => {
+    const { user } = req.headers;
+    const idMessage = req.params.ID_DA_MENSAGEM;
+
+    try {
+        const message = await db.collection('messages').find({_id: ObjectId(`${idMessage}`)}).toArray();
+        
+        if (message.length === 0) {
+            return res.sendStatus(404);
+        }
+
+        if (message[0].from !== user) {
+            return res.sendStatus(401);
+        }
+
+        await db.collection('messages').deleteOne({_id: ObjectId(`${idMessage}`)});
+
+        res.sendStatus(200);
+    } catch (error) {
+        res.status(500).send(error);
+    }
+
+})
+
 app.listen(5000, () => {
     console.log('listen on port 5000');
 });
