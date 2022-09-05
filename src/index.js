@@ -192,9 +192,9 @@ app.delete('/messages/:ID_DA_MENSAGEM', async (req, res) => {
 
 app.put('/messages/:ID_DA_MENSAGEM', async (req, res) => {
     const { user } = req.headers;
-    const message = req.body
+    const { to, text, type } = req.body
     const idMessage = req.params.ID_DA_MENSAGEM;
-    const validation = messageSchema.validate(message, {abortEarly: false});
+    const validation = messageSchema.validate(req.body, {abortEarly: false});
 
     if (validation.error) {
         const error = validation.error.details.map(obj => obj.message);
@@ -209,18 +209,27 @@ app.put('/messages/:ID_DA_MENSAGEM', async (req, res) => {
             return res.sendStatus(422);
         }
 
+        const message = await db.collection('messages').find({_id: ObjectId(`${idMessage}`)}).toArray();
+
+        if (message.length === 0) {
+            return res.sendStatus(404);
+        }
+
+        if(user !== message[0].from){
+            return res.sendStatus(401);
+        }
+
+        await db.collection('messages')
+        .updateOne(
+            {_id: ObjectId (`${idMessage}`)},
+            {$set: {text: text}}
+        )
+
         res.sendStatus(200);
-        
     } catch (error) {
         res.status(500).send(error);
     }
-
-    
-
-
-
-    res.send(idMessage);
-})
+});
 
 app.listen(5000, () => {
     console.log('listen on port 5000');
