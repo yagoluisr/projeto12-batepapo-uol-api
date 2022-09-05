@@ -146,23 +146,26 @@ app.post('/status', async (req, res) => {
 });
 
 setInterval(async () => {
-    let participant = await db.collection('participants').find().toArray();
+    try {
+        let participant = await db.collection('participants').find().toArray();
 
-    let filterParticipant = participant.filter(obj => ((Date.now() - obj.lastStatus) / 1000) > 10);
+        let filterParticipant = participant.filter(obj => ((Date.now() - obj.lastStatus) / 1000) > 10);
 
-    filterParticipant.forEach(async (obj) => {
-        await db.collection('participants').deleteOne({_id: ObjectId(obj._id)});
-        await db.collection('messages').insertOne(
-            {
-                from: obj.name, 
-                to: 'Todos', 
-                text: 'sai da sala...', 
-                type: 'status', 
-                time: dayjs().format('HH:mm:ss')
-            }
-        )
-    });
-
+        filterParticipant.forEach(async (obj) => {
+            await db.collection('participants').deleteOne({_id: ObjectId(obj._id)});
+            await db.collection('messages').insertOne(
+                {
+                    from: obj.name, 
+                    to: 'Todos', 
+                    text: 'sai da sala...', 
+                    type: 'status', 
+                    time: dayjs().format('HH:mm:ss')
+                }
+            )
+        });
+    } catch (error) {
+        console.log(error);
+    }
 }, 15000);
 
 app.delete('/messages/:ID_DA_MENSAGEM', async (req, res) => {
