@@ -26,8 +26,7 @@ const messageSchema = joi.object({
     to: joi.string().empty(),
     text: joi.string().empty(),
     type: joi.string().valid("message","private_message")
-})
-
+});
 
 app.post('/participants', async (req, res) => {
     const participant = req.body;
@@ -189,7 +188,38 @@ app.delete('/messages/:ID_DA_MENSAGEM', async (req, res) => {
     } catch (error) {
         res.status(500).send(error);
     }
+});
 
+app.put('/messages/:ID_DA_MENSAGEM', async (req, res) => {
+    const { user } = req.headers;
+    const message = req.body
+    const idMessage = req.params.ID_DA_MENSAGEM;
+    const validation = messageSchema.validate(message, {abortEarly: false});
+
+    if (validation.error) {
+        const error = validation.error.details.map(obj => obj.message);
+        return res.status(422).send(error)
+    }
+
+    try {
+    
+        const participant = await db.collection('participants').find({name: user}).toArray();
+    
+        if (participant.length === 0) {
+            return res.sendStatus(422);
+        }
+
+        res.sendStatus(200);
+        
+    } catch (error) {
+        res.status(500).send(error);
+    }
+
+    
+
+
+
+    res.send(idMessage);
 })
 
 app.listen(5000, () => {
