@@ -40,14 +40,12 @@ app.post('/participants', async (req, res) => {
 
     try {
         const filterParticipant = await db.collection('participants').find({name: participant.name}).toArray();
-        console.log(filterParticipant);
 
         if (filterParticipant.length !== 0){
             return res.status(409).send('Já existe um usuário com esse nome');
         }
 
         const user = await db.collection('participants').insertOne({...participant, lastStatus: `${Date.now()}`})    
-        console.log(user);
 
         const message = await db.collection('messages').insertOne({
             from: participant.name, 
@@ -84,17 +82,17 @@ app.post('/messages', async (req, res) => {
         const participant = await db.collection('participants').find({name: user}).toArray();
         
         if (participant.length === 0) {
-            return res.status(422).send('Esse remetente não está mais online');
+            return res.sendStatus(422);
         }
 
-        const test = await db.collection('messages').insertOne({
+        await db.collection('messages').insertOne({
             from: user, 
             to, 
             text, 
             type, 
             time: dayjs().format('HH:mm:ss')
-    });
-        console.log(test);
+        });
+
         res.sendStatus(201);
     } catch (error) {
         res.status(422).send(error);
@@ -121,7 +119,7 @@ app.get('/messages', async (req, res) => {
 
         res.status(200).send(limitMessages);
     } catch (error) {
-        res.status(422).send(error);   
+        res.status(500).send(error);   
     }
 });
 
@@ -132,7 +130,7 @@ app.post('/status', async (req, res) => {
         const participant = await db.collection('participants').find({name: user}).toArray();
         
         if (participant.length === 0) {
-            return res.status(404).send('Status: Offline');
+            return res.sendStatus(404);
         }
 
         await db.collection('participants')
@@ -141,9 +139,9 @@ app.post('/status', async (req, res) => {
             {$set:{lastStatus: `${Date.now()}`}}
         )
 
-        res.status(200).send(user);
+        res.sendStatus(200);
     } catch (error) {
-        res.status(404).send(error);
+        res.status(500).send(error);
     }
 });
 
